@@ -4,6 +4,7 @@ void mainMenu(struct User u)
 {
     int option;
     system("clear");
+    system("clear");
     printf("\n\n\t\t======= ATM =======\n\n");
     printf("\n\t\t-->> Feel free to choose one of the options below <<--\n");
     printf("\n\t\t[1]- Create a new account\n");
@@ -66,7 +67,8 @@ void initMenu(struct User *u)
             loginMenu(u->name, u->password);
             if (strcmp(u->password, getPassword(*u)) == 0)
             {
-                printf("\n\nPassword Match!");
+                u->id = getID(u->name);
+                // printf("\n\nPassword Match!%d, %s",u->id, u->name);
             }
             else
             {

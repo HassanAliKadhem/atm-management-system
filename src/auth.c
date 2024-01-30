@@ -44,18 +44,45 @@ const char *getPassword(struct User u)
         exit(1);
     }
     int id = 0;
-    while (fscanf(fp, "%d %s %s", &id, userChecker.name, userChecker.password) != EOF)
+    while (fscanf(fp, "%d %s %s", &u.id, userChecker.name, userChecker.password) != EOF)
     {
         if (strcmp(userChecker.name, u.name) == 0)
         {
             fclose(fp);
             char *buff = userChecker.password;
+            // u.id = id;
             return buff;
         }
     }
 
     fclose(fp);
     return "no user found";
+}
+
+const int getID(char userName[50])
+{
+    FILE *fp;
+    struct User userChecker;
+
+    if ((fp = fopen("./data/users.txt", "r")) == NULL)
+    {
+        printf("Error! opening file");
+        exit(1);
+    }
+    int id = 0;
+    while (fscanf(fp, "%d %s %s", &id, userChecker.name, userChecker.password) != EOF)
+    {
+        // printf("%s",userChecker.name);
+        if (strcmp(userChecker.name, userName) == 0)
+        {
+            fclose(fp);
+            // printf("found id: %d", id);
+            return id;
+        }
+    }
+
+    fclose(fp);
+    return -1;
 }
 
 int checkUserExists(char userName[50])

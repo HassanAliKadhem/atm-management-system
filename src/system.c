@@ -124,7 +124,7 @@ void createNewAcc(struct User u)
     struct Record r;
     struct Record cr;
     char userName[50];
-    FILE *pf = fopen(RECORDS, "a+");
+    FILE *pf = fopen(RECORDS, "r+");
 
     system("clear");
     printf("\t\t\t===== New record =====\n");
@@ -143,16 +143,29 @@ noAccount:
             goto noAccount;
         }
         r.id = cr.id + 1;
+        // printf("id: %d, %d\n", r.id, cr.id);
     }
+    // printf("id: %d, %d\n", r.id, cr.id);
     printf("\nEnter the country:");
     scanf("%s", r.country);
     printf("\nEnter the phone number:");
     scanf("%d", &r.phone);
+noAmount:
     printf("\nEnter amount to deposit: $");
     scanf("%lf", &r.amount);
-    printf("\nChoose the type of account:\n\t-> saving\n\t-> current\n\t-> fixed01(for 1 year)\n\t-> fixed02(for 2 years)\n\t-> fixed03(for 3 years)\n\n\tEnter your choice:");
+    if (r.amount < 0)
+    {
+        printf("X the amount deposited is negative, which is not supported");
+        goto noAmount;
+    }
+noType:
+    printf("\ntype in the account type:\n\tsaving\n\tcurrent\n\tfixed01(for 1 year)\n\tfixed02(for 2 years)\n\tfixed03(for 3 years)\n\n\tEnter your choice:");
     scanf("%s", r.accountType);
-
+    if (strcmp(r.accountType, "saving") != 0 && strcmp(r.accountType, "current") != 0 && strcmp(r.accountType, "fixed01") != 0 && strcmp(r.accountType, "fixed02") != 0 && strcmp(r.accountType, "fixed03") != 0)
+    {
+        printf("Account type is not correct");
+        goto noType;
+    }
     saveAccountToFile(pf, u, r);
 
     fclose(pf);
@@ -200,7 +213,7 @@ void checkAccount(struct User u)
 
     int id;
     scanf("%d", &id);
-    
+
     int found = 0;
     while (getAccountFromFile(pf, userName, &r))
     {
@@ -221,22 +234,22 @@ void checkAccount(struct User u)
             if (strcmp(r.accountType, "saving") == 0)
             {
                 printf("savings: interest rate 7%%\n");
-                printf("You will get $%.2f as interest on day %d of every month", r.amount * 0.07/12, r.deposit.day);
+                printf("You will get $%.2f as interest on day %d of every month", r.amount * 0.07 / 12, r.deposit.day);
             }
             else if (strcmp(r.accountType, "fixed01") == 0)
             {
                 printf("fixed01(1 year account): interest rate 4%%\n");
-                printf("You will get $%.2f as interest on %d/%d/%d", r.amount * 0.04, r.deposit.month,r.deposit.day,r.deposit.year+1);
+                printf("You will get $%.2f as interest on %d/%d/%d", r.amount * 0.04, r.deposit.month, r.deposit.day, r.deposit.year + 1);
             }
             else if (strcmp(r.accountType, "fixed02") == 0)
             {
                 printf("fixed01(1 year account): interest rate 5%%\n");
-                printf("You will get $%.2f as interest on %d/%d/%d", r.amount * 0.05*2, r.deposit.month,r.deposit.day,r.deposit.year+2);
+                printf("You will get $%.2f as interest on %d/%d/%d", r.amount * 0.05 * 2, r.deposit.month, r.deposit.day, r.deposit.year + 2);
             }
             else if (strcmp(r.accountType, "fixed03") == 0)
             {
                 printf("fixed01(1 year account): interest rate 8%%\n");
-                printf("You will get $%.2f as interest on %d/%d/%d", r.amount * 0.08*3, r.deposit.month,r.deposit.day,r.deposit.year+3);
+                printf("You will get $%.2f as interest on %d/%d/%d", r.amount * 0.08 * 3, r.deposit.month, r.deposit.day, r.deposit.year + 3);
             }
             else if (strcmp(r.accountType, "current") == 0)
             {
@@ -245,10 +258,13 @@ void checkAccount(struct User u)
         }
     }
     fclose(pf);
-    if (found ==1 ) {
+    if (found == 1)
+    {
         success(u);
-    } else {
-        printf("no account matching %d found",id);
+    }
+    else
+    {
+        printf("no account matching %d found", id);
         fail(u);
     }
 }
@@ -346,11 +362,13 @@ void transactAccount(struct User u)
 
     int id;
     scanf("%d", &id);
-
+    int found = 0;
+    int changed = 0;
     while (getAccountFromFile(pf, userName, &r))
     {
         if (strcmp(userName, u.name) == 0 && r.id == id)
         {
+            found = 1;
             system("clear");
             if (strcmp(r.accountType, "fixed01") == 0 || strcmp(r.accountType, "fixed02") == 0 || strcmp(r.accountType, "fixed03") == 0)
             {
@@ -376,8 +394,13 @@ void transactAccount(struct User u)
                     {
                         printf("\n\nYou don't have enough money in your account.");
                     }
+                    else if (amount < 0)
+                    {
+                        printf("\n\nYou can't pay negative amount.");
+                    }
                     else
                     {
+                        changed = 1;
                         r.amount = r.amount - amount;
                     }
                     break;
@@ -388,8 +411,13 @@ void transactAccount(struct User u)
                     {
                         printf("\n\nYou don't have enough money in your account.");
                     }
+                    else if (amount < 0)
+                    {
+                        printf("\n\nYou can't withdraw negative amount.");
+                    }
                     else
                     {
+                        changed = 1;
                         r.amount = r.amount - amount;
                         printf("\n\nDon't forget to take your cash from the machine.");
                     }
@@ -397,8 +425,16 @@ void transactAccount(struct User u)
                 case 3:
                     printf("\n\n\t\tHow much do you want to deposit \nAmount: ");
                     scanf("%f", &amount);
-                    r.amount = r.amount + amount;
-                    printf("\n\n%f Deposited to your account.", amount);
+                    if (amount < 0)
+                    {
+                        printf("\n\nYou can't deposit negative amount.");
+                    }
+                    else
+                    {
+                        changed = 1;
+                        r.amount = r.amount + amount;
+                        printf("\n\n%f Deposited to your account.", amount);
+                    }
                     break;
                 default: // wrong choice
                     break;
@@ -423,7 +459,20 @@ void transactAccount(struct User u)
     fclose(newPf);
     remove("./data/records.txt");
     rename("./data/newRecords.txt", "./data/records.txt");
-    success(u);
+    if (found == 1 && changed == 1)
+    {
+        success(u);
+    }
+    else if (changed == 1)
+    {
+        printf("Account not updated");
+        fail(u);
+    }
+    else
+    {
+        printf("Account not found");
+        fail(u);
+    }
 }
 
 void deleteAccount(struct User u)
@@ -476,6 +525,7 @@ void transferAccount(struct User u)
     printf("\n\n\t\tEnter account id that you want to transfer\n  Account ID:");
 
     int id;
+    int changed = 0;
     scanf("%d", &id);
 
     while (getAccountFromFile(pf, userName, &r))
@@ -491,12 +541,11 @@ void transferAccount(struct User u)
 
             FILE *fp;
             struct User userChecker;
-            if ((fp = fopen("./data/users.txt", "a+")) == NULL)
+            if ((fp = fopen("./data/users.txt", "r")) == NULL)
             {
                 printf("Error! opening file");
                 exit(1);
             }
-            int changed = 0;
             while (fscanf(fp, "%d %s %s", &userChecker.id, userChecker.name, userChecker.password) != EOF)
             {
                 if (userChecker.id == userChoice)
@@ -555,5 +604,12 @@ void transferAccount(struct User u)
     fclose(newPf);
     remove("./data/records.txt");
     rename("./data/newRecords.txt", "./data/records.txt");
-    success(u);
+    if (changed == 1)
+    {
+        success(u);
+    }
+    else
+    {
+        fail(u);
+    }
 }
